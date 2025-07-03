@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, forwardRef } from 'react';
 import { ScheduledProductionRun, ProductionLine, Product, OperatingDayTime, ProductClassification, ScheduleStatus } from '../../types';
 import { LockClosedIcon } from '../icons';
 import { useAppData } from '../../contexts/AppDataContext'; 
@@ -147,7 +146,7 @@ function getOperationalSegments(
 }
 
 
-const GanttChart: React.FC<GanttChartProps> = ({
+const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     schedules,
     lines,
     day: startDayOfView, 
@@ -158,7 +157,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
     onUpdateFeedback,
     addWorkingTime, 
     calculateEffectiveWorkDuration 
-}) => {
+}, ref) => {
   const { schedules: allSchedules } = useAppData(); 
   const [draggedItem, setDraggedItem] = useState<{
     schedule: ScheduledProductionRun;
@@ -489,7 +488,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
   };
 
   return (
-    <div className="overflow-x-auto relative bg-white rounded shadow gantt-chart-container" style={{ width: '100%' }}>
+    <div ref={ref} className="overflow-x-auto relative bg-white rounded shadow gantt-chart-container" style={{ width: '100%' }}>
       <div style={{ width: `${chartWidth}px` }} className="relative">
         {renderTimeHeaders()}
         {currentTimeIndicatorPosition !== null && (
@@ -641,6 +640,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default GanttChart;
