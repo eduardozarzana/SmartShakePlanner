@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppData } from '../contexts/AppDataContext';
 import { ROUTES, APP_NAME } from '../constants';
@@ -23,6 +22,7 @@ const DashboardPage: React.FC = () => {
   } = useAppData();
   const [currentTimeForGantt, setCurrentTimeForGantt] = useState(new Date()); // For Gantt's current time indicator
   const [ganttFeedback, setGanttFeedback] = useState<{message: string, type: 'success' | 'error' | 'info' } | null>(null);
+  const ganttContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // This timer is now only for updating the visual current time indicator in Gantt
@@ -79,6 +79,29 @@ const DashboardPage: React.FC = () => {
         };
       });
   }, [schedules, ganttViewStartDate, ganttViewEndDate, getProductById, getProductionLineById]);
+
+  useEffect(() => {
+    // Wait for the ref to be attached and data to be loaded.
+    if (ganttContainerRef.current && schedulesForGanttView.length > 0) {
+        const now = new Date();
+        const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000));
+        
+        // Check if "one hour ago" is within the view range
+        const diffMs = oneHourAgo.getTime() - ganttViewStartDate.getTime();
+        
+        if (diffMs > 0) {
+            const diffMinutes = diffMs / (1000 * 60);
+            
+            const hourWidth = 120; // From GanttChart component
+            const scrollLeftPx = (diffMinutes / 60) * hourWidth;
+            
+            // Scroll to bring "1 hour ago" into view, with a 100px offset from the left edge.
+            const desiredPosition = scrollLeftPx - 100; 
+
+            ganttContainerRef.current.scrollLeft = Math.max(0, desiredPosition);
+        }
+    }
+}, [ganttViewStartDate, schedulesForGanttView]); // Re-run if view start date or data changes.
 
 
   const agendaDoDia = useMemo(() => {
@@ -157,6 +180,7 @@ const DashboardPage: React.FC = () => {
         )}
         {productionLines.length > 0 && schedulesForGanttView.length > 0 ? (
           <GanttChart
+            ref={ganttContainerRef}
             schedules={schedulesForGanttView}
             lines={productionLines.filter(line => schedulesForGanttView.some(s => s.lineId === line.id))} 
             day={ganttViewStartDate} 
